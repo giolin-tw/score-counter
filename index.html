@@ -321,10 +321,11 @@
     }
 
     function updateResultList(counts) {
+      const labels = ['⭐️⭐️⭐️⭐️⭐️', '⭐️⭐️⭐️⭐️', '⭐️⭐️⭐️', '⭐️⭐️', '⭐️'];
       resultList.innerHTML = '';
-      counts.forEach((count, index) => {
+      counts.slice().reverse().forEach((count, index) => {
         const item = document.createElement('li');
-        item.textContent = `Button ${index + 1}`;
+        item.textContent = labels[index] || '';
         const value = document.createElement('span');
         value.textContent = String(count);
         item.appendChild(value);
