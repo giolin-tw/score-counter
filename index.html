@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Score Counter</title>
+  <style>
+    :root {
+      font-family: system-ui, sans-serif;
+      color: #111;
+      background: #f7f7f9;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body, html {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    #button-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      grid-template-rows: repeat(5, minmax(0, 1fr));
+      height: 100vh;
+      width: 100vw;
+    }
+
+    .score-button {
+      border: none;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font-size: clamp(3rem, 6vw, 6rem);
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease;
+      color: white;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .score-button[data-index="1"] {
+      background: #111827;
+    }
+
+    .score-button[data-index="2"] {
+      background: #475569;
+    }
+
+    .score-button[data-index="3"] {
+      background: #2563eb;
+    }
+
+    .score-button[data-index="4"] {
+      background: #22c55e;
+      color: #111;
+    }
+
+    .score-button[data-index="5"] {
+      background: #f59e0b;
+      color: #111;
+    }
+
+    .score-button:last-child {
+      border-bottom: none;
+    }
+
+    .score-button {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .score-button::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.24);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+
+    .score-button.clicked::after {
+      opacity: 1;
+    }
+
+    .score-button:hover,
+    .score-button:focus {
+      transform: scale(1.02);
+      filter: brightness(1.08);
+      outline: none;
+    }
+
+    #results-button {
+      position: fixed;
+      right: 1.25rem;
+      bottom: 1.25rem;
+      z-index: 10;
+      width: 4.5rem;
+      height: 4.5rem;
+      border-radius: 50%;
+      border: none;
+      background: #2563eb;
+      color: white;
+      box-shadow: 0 18px 35px rgba(38, 99, 235, 0.22);
+      font-size: 1.15rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    #results-button:hover,
+    #results-button:focus {
+      background: #1d4ed8;
+      outline: none;
+    }
+
+    dialog {
+      border: none;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      width: min(480px, calc(100vw - 2rem));
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.18);
+    }
+
+    dialog::backdrop {
+      background: rgba(17, 24, 39, 0.45);
+      backdrop-filter: blur(2px);
+    }
+
+    .dialog-title {
+      margin: 0 0 1rem;
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    .result-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1.4rem;
+    }
+
+    .result-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid #e2e4ea;
+      font-size: 1rem;
+    }
+
+    .result-list li:last-child {
+      border-bottom: none;
+    }
+
+    .dialog-actions {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    .dialog-actions button {
+      border: none;
+      cursor: pointer;
+      border-radius: 0.75rem;
+      padding: 0.9rem 1.2rem;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    #reset-button {
+      background: #ef4444;
+      color: white;
+    }
+
+    #reset-button:hover,
+    #reset-button:focus {
+      background: #dc2626;
+      outline: none;
+    }
+
+    #close-button {
+      background: #e5e7eb;
+      color: #111;
+    }
+
+    #close-button:hover,
+    #close-button:focus {
+      background: #d1d5db;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+  <main id="button-grid" aria-label="Score buttons">
+    <button class="score-button" data-index="5">⭐️⭐️⭐️⭐️⭐️</button>
+    <button class="score-button" data-index="4">⭐️⭐️⭐️⭐️</button>
+    <button class="score-button" data-index="3">⭐️⭐️⭐️</button>
+    <button class="score-button" data-index="2">⭐️⭐️</button>
+    <button class="score-button" data-index="1">⭐️</button>
+  </main>
+
+  <button id="results-button" aria-label="Show results">Results</button>
+
+  <dialog id="results-dialog">
+    <h2 class="dialog-title">Click counts</h2>
+    <ul class="result-list" id="result-list"></ul>
+    <div class="dialog-actions">
+      <button id="reset-button" type="button">Reset counts</button>
+      <button id="close-button" type="button">Close</button>
+    </div>
+  </dialog>
+
+  <script>
+    const COOKIE_KEY = 'scoreCounterCounts';
+    const buttons = document.querySelectorAll('.score-button');
+    const resultsButton = document.getElementById('results-button');
+    const resultsDialog = document.getElementById('results-dialog');
+    const resultList = document.getElementById('result-list');
+    const resetButton = document.getElementById('reset-button');
+    const closeButton = document.getElementById('close-button');
+
+    function readCounts() {
+      const raw = document.cookie
+        .split('; ')
+        .find((cookie) => cookie.startsWith(COOKIE_KEY + '='));
+      if (!raw) return [0, 0, 0, 0, 0];
+      try {
+        const parsed = JSON.parse(decodeURIComponent(raw.split('=')[1]));
+        if (Array.isArray(parsed) && parsed.length === 5) {
+          return parsed.map((value) => Number(value) || 0);
+        }
+      } catch (error) {
+        // ignore parse errors and reset counts
+      }
+      return [0, 0, 0, 0, 0];
+    }
+
+    function writeCounts(counts) {
+      const expires = new Date();
+      expires.setDate(expires.getDate() + 30);
+      document.cookie = `${COOKIE_KEY}=${encodeURIComponent(JSON.stringify(counts))}; expires=${expires.toUTCString()}; path=/; samesite=lax`;
+    }
+
+    function updateResultList(counts) {
+      resultList.innerHTML = '';
+      counts.forEach((count, index) => {
+        const item = document.createElement('li');
+        item.textContent = `Button ${index + 1}`;
+        const value = document.createElement('span');
+        value.textContent = String(count);
+        item.appendChild(value);
+        resultList.appendChild(item);
+      });
+    }
+
+    function handleButtonClick(index, button) {
+      const counts = readCounts();
+      counts[index] += 1;
+      writeCounts(counts);
+      button.classList.add('clicked');
+      window.setTimeout(() => button.classList.remove('clicked'), 200);
+    }
+
+    buttons.forEach((button) => {
+      const index = Number(button.dataset.index) - 1;
+      button.addEventListener('click', () => handleButtonClick(index, button));
+    });
+
+    resultsButton.addEventListener('click', () => {
+      const counts = readCounts();
+      updateResultList(counts);
+      if (typeof resultsDialog.showModal === 'function') {
+        resultsDialog.showModal();
+      } else {
+        resultsDialog.setAttribute('open', '');
+      }
+    });
+
+    resetButton.addEventListener('click', () => {
+      const resetCounts = [0, 0, 0, 0, 0];
+      writeCounts(resetCounts);
+      updateResultList(resetCounts);
+    });
+
+    closeButton.addEventListener('click', () => {
+      resultsDialog.close();
+    });
+
+    resultsDialog.addEventListener('close', () => {
+      resultsDialog.removeAttribute('open');
+    });
+
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && resultsDialog.open) {
+        resultsDialog.close();
+      }
+    });
+  </script>
+</body>
+</html>
