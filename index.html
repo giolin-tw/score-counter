@@ -99,8 +99,8 @@
     #results-button {
       position: fixed;
       right: 1.25rem;
-      bottom: 1.25rem;
-      z-index: 10;
+      bottom: 6.0rem;
+      z-index: 11;
       width: 4.5rem;
       height: 4.5rem;
       border-radius: 50%;
@@ -122,24 +122,32 @@
     #fullscreen-button {
       position: fixed;
       right: 1.25rem;
-      bottom: 6.5rem;
-      z-index: 11;
+      bottom: 1.25rem;
+      z-index: 10;
       width: 4.5rem;
       height: 4.5rem;
       border-radius: 50%;
       border: none;
-      background: #06b6d4;
+      background: #2563eb;
       color: white;
-      box-shadow: 0 12px 28px rgba(6, 182, 212, 0.18);
-      font-size: 1.05rem;
+      box-shadow: 0 18px 35px rgba(38, 99, 235, 0.22);
+      font-size: 1.15rem;
       font-weight: 700;
       cursor: pointer;
     }
 
     #fullscreen-button:hover,
     #fullscreen-button:focus {
-      background: #0891b2;
+      background: #1d4ed8;
       outline: none;
+    }
+
+    #fullscreen-button .fs-icon {
+      font-size: 4rem;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+      transform: translateY(-1px);
     }
 
     dialog {
@@ -227,7 +235,7 @@
   </main>
 
   <button id="results-button" aria-label="Show results">Results</button>
-  <button id="fullscreen-button" aria-label="Toggle fullscreen">⤢</button>
+  <button id="fullscreen-button" aria-label="Toggle fullscreen"><span class="fs-icon">⤢</span></button>
 
   <dialog id="results-dialog">
     <h2 class="dialog-title">Click counts</h2>
@@ -243,6 +251,7 @@
     const buttons = document.querySelectorAll('.score-button');
     const resultsButton = document.getElementById('results-button');
     const fullscreenButton = document.getElementById('fullscreen-button');
+    const fullscreenIcon = fullscreenButton ? fullscreenButton.querySelector('.fs-icon') : null;
     const resultsDialog = document.getElementById('results-dialog');
     const resultList = document.getElementById('result-list');
     const resetButton = document.getElementById('reset-button');
@@ -251,8 +260,15 @@
     function updateFullscreenButton() {
       if (!fullscreenButton) return;
       const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
-      fullscreenButton.textContent = isFs ? '⤡' : '⤢';
+      // Use explicit expand/collapse glyphs: '⛶' = expand, '🗗' = collapse
+      const expandGlyph = '⛶';
+      const collapseGlyph = 'x';
+      if (fullscreenIcon) fullscreenIcon.textContent = isFs ? collapseGlyph : expandGlyph;
+      else fullscreenButton.textContent = isFs ? collapseGlyph : expandGlyph;
       fullscreenButton.setAttribute('aria-pressed', String(isFs));
+      if (resultsButton) {
+        resultsButton.style.display = isFs ? 'none' : '';
+      }
     }
 
     async function toggleFullscreen() {
