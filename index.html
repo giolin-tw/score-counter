@@ -346,11 +346,32 @@
       }
     });
 
-    resetButton.addEventListener('click', () => {
-      const resetCounts = [0, 0, 0, 0, 0];
-      writeCounts(resetCounts);
-      updateResultList(resetCounts);
-    });
+    // Require three quick clicks on the Reset button to avoid accidental resets
+    (function setupResetTripleClick() {
+      let clickCount = 0;
+      let timer = null;
+      const WINDOW = 800; // ms allowed between clicks
+
+      function performReset() {
+        const resetCounts = [0, 0, 0, 0, 0];
+        writeCounts(resetCounts);
+        updateResultList(resetCounts);
+      }
+
+      function onClick(e) {
+        e.preventDefault();
+        clickCount += 1;
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => { clickCount = 0; timer = null; }, WINDOW);
+        if (clickCount >= 3) {
+          clickCount = 0;
+          if (timer) { clearTimeout(timer); timer = null; }
+          performReset();
+        }
+      }
+
+      if (resetButton) resetButton.addEventListener('click', onClick);
+    })();
 
     closeButton.addEventListener('click', () => {
       resultsDialog.close();
