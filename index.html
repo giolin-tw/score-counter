@@ -19,16 +19,20 @@
       margin: 0;
       min-height: 100svh;
       height: 100svh;
-      overflow-x: hidden;
+      /* Prevent the page from scrolling; UI fits the viewport */
+      overflow: hidden;
     }
 
     #button-grid {
       display: grid;
       grid-template-columns: 1fr;
+      /* 5 equal rows that split the viewport height evenly */
       grid-template-rows: repeat(5, minmax(0, 1fr));
       height: 100svh;
       max-height: 100svh;
       width: 100vw;
+      /* Ensure no implicit scrolling inside the grid */
+      overflow: hidden;
     }
 
     .score-button {
@@ -347,9 +351,24 @@
       window.setTimeout(() => button.classList.remove('clicked'), 200);
     }
 
+    // Track last touch time to avoid double-counting (touch -> click)
+    let lastTouchTimestamp = 0;
+
     buttons.forEach((button) => {
       const index = Number(button.dataset.index) - 1;
-      button.addEventListener('click', () => handleButtonClick(index, button));
+
+      // Count on touchstart (touch down) for touch devices
+      button.addEventListener('touchstart', (e) => {
+        lastTouchTimestamp = Date.now();
+        handleButtonClick(index, button);
+      }, { passive: true });
+
+      // Fallback for mouse/keyboard click. Ignore click events that follow a recent touch.
+      button.addEventListener('click', () => {
+        const now = Date.now();
+        if (now - lastTouchTimestamp < 700) return; // ignore duplicate click after touch
+        handleButtonClick(index, button);
+      });
     });
 
     resultsButton.addEventListener('click', () => {
